@@ -6,10 +6,10 @@
 
 | Section | Name | Section | Name |
 |---|---|---|---|
-| I. | [Desctiption](#description) | V. |  |
-| II. | [Components Involved](#components-involved) | VI. |  |
-| III. | [Data Flow](#data-flow) | VII. |  |
-| IV. | []() | VIII. |  |
+| I. | [Description](#description) | V. | [Tests](#tests) |
+| II. | [Components Involved](#components-involved) | VI. | [Important Files](#important-files) |
+| III. | [Data Flow](#data-flow) | VII. | [Code Snippets](#code-snippets) |
+| IV. | [Plan](#plan) |
 
 ___
 
