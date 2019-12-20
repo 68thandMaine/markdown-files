@@ -8,27 +8,30 @@
 |---|---|---|---|
 | I. | [Description](#description) | V. | [Tests](#tests) |
 | II. | [Components Involved](#components-involved) | VI. | [Important Files](#important-files) |
-| III. | [Data Flow](#data-flow) | VII. | [Code Snippets](#code-snippets) |
-| IV. | [Plan](#plan) |
+| III. | [Data Flow](#data-flow) | VII. | [Altered Files](#alterted-files) |
+| IV. | [Plan](#plan) | VIII. | [Code Snippets](#code-snippets) |
 
 ___
 
-### Description
+## Description
 
-Champ currently displays multiple notifications about credit reports, but each notification displays the same information. This is redundant and should be fixed such that only one credit report issue is displayed.
+Champ currently displays multiple notifications about credit reports, but each notification displays the same information. This is redundant and should be fixed such that only one credit report issue is displayed. Additionally, when a user views the pipeline, any applications that have issues display a count of the issues:
 
-### Components Involved
+![pipeline](../assets/img/pipeline.png)
 
-To correct this behavior I will need to touch the following components:
+This text should not contain a numerical value.
+___
+
+## Components Involved
 
 - `application-container-saga.js`
 
-  - PATH: _src/js/app/modules/rf-react/pipeline/applications/sagas/applications-container-saga.js
+  - PATH: _src/js/app/modules/rf-react/pipeline/applications/sagas/applications-container-saga.js_
   - When viewing the pipeline, the state object contains an empty array for holding application issues (however there is a count of issues available). It is only by clicking the collapsible menu that this array is filled with issue objects. These objects originate from the  `fetchApplicationDetails` action being dispensed to the `fetchApplicationDetails` method in `applications-container-saga.js`.
 
 ___
 
-### Data Flow
+## Data Flow
 
 | Step | Description | Component |  Path | Action | Children Until Next Step |
 |---|---|---|---|---|---|
@@ -37,24 +40,29 @@ ___
 | 3. | Create an object with key value pairs of `appliactionID` : `{...application}`. Each pair is passed to the issue component. | `Issues.jsx` |  | |
 
 ___
-___
 
-### Plan
+## Plan
 
-#### To Fix Details in the Pipeline
+### To Fix Details in the Pipeline
 
 **Problem**: When viewing the Pipeline there are two problems
   
-  1. When the pipeline is loaded, PANDA sends a large amount of data to CHAMP. Included in this payload is an `applicationById` property that holds some, but not all information about applications. Each application has a property called `stipulations`. This property holds information pertaining to issues with an application. PANDA sends a count of the issues with an application, but not the issues themselves. This creates an issue when there are duplicate stipulations because the `issueCount` from PANDA does not filter for duplicates, so the count from PANDA might be incorrect.
+  1. When the pipeline is loaded, PANDA sends a large amount of data to CHAMP. Included in this payload is an `applicationById` property that holds some, but not all information about applications. Each application has a property called `stipulations`. This property holds information pertaining to issues within an application. PANDA sends a count of the issues with an application, but not the issues themselves. This creates an issue when there are duplicate stipulations because the `issueCount` from PANDA does not filter for duplicates, so the count from PANDA might be incorrect.
       - `issueCount : 4` rather than `issueCount : 3`
 
-**Solution**: Filter duplicates from the `stipulations.application_approval` array generated in the `applications-container-saga`. [Click to see code](#filter-saga-duplicate-issues).
+**Solution**: Filter duplicates from the `stipulations.application_approval` array generated in the `applications-container-saga`. [Click to see code](#saga-filter-duplicate-issues).
 
-**Test Breaks**: Filtering duplicates in the saga will cause one test to fail.
+___
 
-| Test Name | Code Location (file, code line) | Reason for break | Propsosed fix |
-| ---|--- |--- |--- |
-|  `applications-container-saga fetchApplicationDetails calls updateApplication with the received data` | src/js/app/modules/rf-react/pipeline/applications/sagas/applications-container-saga.js : 112 | Not sure why this is breaking. The only property that changes between the tests and the real deal is a value in the generator used in the saga. To view a passing object [Click here](#update-application-saga-pass-object). To view the failing object [Click here](#update-application-saga-fail-object).| Unsure |
+## Tests
+
+In order to ensure that the solution to this ticket is solved I will add a test case to the  `updateApplication` method in `applications-container-saga-test.js`.
+
+To view the test case [Click Here](#saga-filter-duplicate-issues-test)
+
+### Explanation
+
+
 
 ___
 
@@ -141,7 +149,7 @@ function getStepDetailsProps(application, fetchApplicationDetails) {
 
 ___
 
-#### Filter Saga Duplicate Issues
+#### Saga Filter Duplicate Issues
 
 >PATH: _src/js/app/modules/rf-react/pipeline/applications/sagas/applications-container-saga.js_
 
@@ -161,6 +169,24 @@ try {
     yield call(updateApplication, { data: { application } });
   }
 ```
+___
+
+#### Saga Filter Duplicate Issues Test
+
+```javascript
+it('it filters duplicate stipulations', () => {
+      data.application = applicationWithIssues;
+      const appStipulationIssues = applicationWithIssues.decisioning.stipulations.application_approval;
+      generator = saga.updateApplication({ data });
+      const app = applicationMapper.toApplication(applicationWithIssues, urlParams);
+      next = generator.next(app);
+      const issuesArray = next.value.PUT.action.data.stipulations.applicationApproval.issues;
+      expect(issuesArray.length).toEqual(appStipulationIssues.length - 1);
+    });
+  });
+```
+
+[Return to code section](#tests)
 
 ___
 
