@@ -1,4 +1,4 @@
-# Use API to Get County Taxroll Cutoff Information
+# Use API to Get County Taxrole Cutoff Information
 
 ## I. Introduction
 
@@ -24,7 +24,7 @@ To impalement this functionality the following applications will need to be upda
 - [Nemo](#updates-to-nemo)
 - [Repayment Estimator](#updates-to-the-repayment-estimator)
 
-### Updates to Champ
+## Updates to Champ
 
 Champ will need to have a way to retreive the most recent taxroll values from the Repayment estimator. This will involve the creation of a new API call, so several updates will need to be made to support this functionality.
 
@@ -39,7 +39,7 @@ Champ will need to have a way to retreive the most recent taxroll values from th
 | [Add an API method](#add-an-api-method) | src/js/app/modules/rf-react/calculator/inputs/**api/api.js** | This file will contain the API method to request county data based off of a program ID. |
 | [Update the calculator directive](#update-the-calculator-directive) | src/js/app/modules/rf-toolkit/pace-calculator/directives/rf-calculator.js | The directive assembles all the information used in the calculator. This includes creating state objects. Code already exists here that   |
 
-#### Add Action Types
+### Add Action Types
 
 The following new action types will be created:
 
@@ -49,7 +49,7 @@ The following new action types will be created:
     const RECEIVE_COUNTY_TAXROLL_DATA_ERROR = 'calculator/inputs/RECEIVE_COUNTY_TAXROLL_DATA_ERROR';
 ```
 
-#### Add New Actions
+### Add New Actions
 
 To support the three action types that will need to be created for this functionality, three new actions will be created as well:
 
@@ -83,7 +83,7 @@ function receiveCountyTaxrollDataError(message, httpStatusCode) {
 
 The new actions that are created are based off of the pattern that was originally used to return measures prior to eliminating the API call responsible for returning measures. Fetching the categories will set a state value to `isLoading: true` and the other two are dependent on the response emitted from the Saga.
 
-#### Update the Calculator Reducer
+### Update the Calculator Reducer
 
 To update the calculator reducer to work with the new API call, a reducer function for handling fetching and receiving program counties will created and a reducer for handling API errors will be created. Then, these three new reducers will be exported with the current reducer function with the `combineReducer` method.
 
@@ -140,7 +140,7 @@ export default combineReducers({
 
 Creating three new reducers is necessary because each will handles a small slice of state that is dependent on the API call. This follows the pattern used in the measures reducer where receiving categories, fetching categories, and handling any API errors is handled by several small reducers all exported with a `combineReducer` method.
 
-#### Create a Saga
+### Create a Saga
 
 To update state when the API is called a generator function will should be written and a helper function that watches FETCH_COUNTY_TAXROLL_DATA will fire the generator each time the action is triggered.
 
@@ -170,7 +170,7 @@ export {
 
 The `watchFetchTaxrollCutoffs` "listens" for actions with a type property of `FETCH_COUNTY_TAXROLL_DATA` and fires the `fetchTaxRollCutoffs` method capturing the response of the last request.
 
-#### Add an API Method
+### Add an API Method
 
 Things to consider:
 
@@ -203,7 +203,7 @@ export function* fetchProgramCountyData(requestBody) {
 
 ```
 
-#### Update the Calculator Directive
+### Update the Calculator Directive
 
 The Angular directive rfCalculator creates the calculator data. In keeping with the logic of fetching measures, the directive file should dispatch the action for fetching the county taxroll cutoff dates. Thanks to the generator helper function, the saga will be called when directive code is hit.
 
@@ -217,8 +217,7 @@ To be more specific we could add in sponsor information here too.
 
 ___
 
-
-### Updates to Nemo
+## Updates to Nemo
 
 Nemo currently does not support a GET request to the Repayment estimator - it only has two POST requests. This mean that Nemo will need to be changed so that it can make handle GET requests to the repayment estimator.
 
@@ -229,7 +228,7 @@ Nemo currently does not support a GET request to the Repayment estimator - it on
 | [Add new endpoint to the config file](#update-configuration-file) | lib/services/repaymnt_estimatr/configuration.rb | To keep with the established pattern I will add the repayment estimator API endpoint to the config file. |
 | [Create the Request to Repayment Estimator](#create-the-request) | lib/services/repaymnt_estimatr/batch_request.rb | THis request will return the counties with tax data. Or perhaps more. There are things to consider. |
 
-#### Add a GET route
+### Add a GET route
 
 Nemo's routes are grouped by type/concern of action in one file. This API call's purpose is to return a list of information that at a minimum must match what Champ currently uses.
 
@@ -244,7 +243,7 @@ This code maps to a route in `repaymnt_estimatr_controller.rb` file, and takes t
 - programID
 - sponsorID
 
-#### Create Controller Method
+### Create Controller Method
 
 The new controller method will look very simple, but the code has many moving parts.
 
@@ -260,7 +259,7 @@ end
 
 This will use the `bactch_request` method to construct the call and return the JSON response from the Repayment Estimator.
 
-#### Update configuration file
+### Update configuration file
 
 `configuration.rb` has funcitons that return the paths to specific endpoints to act as a single source of truth. I will add the repayment estimator endpoints to this file.
 
@@ -281,7 +280,7 @@ This will use the `bactch_request` method to construct the call and return the J
     end
 ```
 
-#### Create the Request
+### Create the Request
 
 Inside the `get_county_tax_data` method a method on the requestor class is called. This method contains the API method that will communicate with the Repayment Estimator.
 
@@ -323,7 +322,7 @@ I will need to do a little bit more researching into ruby routing, but this is t
 ___
 ___
 
-### Updates to the Repayment Estimator
+## Updates to the Repayment Estimator
 
 THe Repayment Estimator App will require a bit of hacking away to assemble the information that we want. Additionally, there could be other data that should be returned from the Repayment Estimator which might need to be built into the response. This section will address returning county tax roll cutoff data only.
 
@@ -349,3 +348,72 @@ With this information we can assemble the appropriate information for a response
 | Update | File | Reason |
 |---|---|---|
 | [Add New Route](#add-new-route) | repayment_estimator/config/routes.rb | The Repayment Estimator will need a new route to return the required data. |
+| [Add New Controller Method](#add-new-controller-method) | repayment_estimator/app/controllers/repayment_estimator/program_definitions_controller.rb | Since this is a new request and no existing routes return the data we need, we will need to create a new controller method. |
+| [Add New Definition](#add-new-definition) | |
+| [Add New Method for Gathering County Names and Tax Dates](#add-method-for-taxroll-cutoffs-by-county) | |
+
+### Add New Route
+
+The new route that is added to the Repayment Estimator should be grouped with `program_definitions` because the route Champ uses in the calculator goes through programs. Since a user can select a program in Champ's calculator menu, it makes sense to start by having 1 API call per program to return tax values.
+
+#### Possible new routes
+
+```ruby
+get "program_definitions/:program/",    to: "program_definitions#program_county_tax_roll"
+```
+
+> _Note there is already a route to `program_definitions/:program` but currently it only returns sponsor names_
+
+### Add New Controller Method
+
+```ruby
+
+def taxroll_dates
+    @program = params["program"]
+    # @sponsor = params["sponsor"]
+    @version = params["version"]
+
+    @data = JSON.pretty_generate(program_definition)
+
+```
+
+### Add New Definition
+
+#### Step 1 Update `hierarchy_of_definitions`
+
+```ruby
+ def hierarchy_of_definitions
+      # NOTE: Order dependent from most generic (first) to most specific (last)
+      [
+        version_definition,
+        program_base_definition,
+        county_taxroll_values, # new definition
+        sponsor_base_definition,
+        county_definition
+      ].compact
+    end
+```
+
+#### Step 2 Add new helper method
+
+```ruby
+  def county_taxroll_values
+    return unless program || sponsor
+
+    load_yml!()
+```
+
+### Add Method for Taxroll Cutoff by County
+
+- This will store an instance variable that holds the payload I want to send to Champ. This method is where the meat of the API call will be assembled. Most of the existing methods all use some sort of path to be fed to a helper method that reads YML files.
+
+```ruby
+    def taxroll_
+```
+___
+# Headings: 1
+## Headings: 2
+### Headings: 3
+#### Headings: 4
+##### Headings: 5
+###### Headings: 6
